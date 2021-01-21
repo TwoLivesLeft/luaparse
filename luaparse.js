@@ -84,7 +84,7 @@
     // The variable's name will be passed as the only parameter
     , onLocalDeclaration: null
     // The version of Lua targeted by the parser (string; allowed values are
-    // '5.1', '5.2', '5.3').
+    // '5.1', '5.2', '5.3', '5.4').
     , luaVersion: '5.1'
     // Encoding mode: how to interpret code units higher than U+007F in input
     , encodingMode: 'none'
@@ -218,6 +218,7 @@
     , gotoJumpInLocalScope: '<goto %1> jumps into the scope of local \'%2\''
     , cannotUseVararg: 'cannot use \'...\' outside a vararg function near \'%1\''
     , invalidCodeUnit: 'code unit U+%1 is not allowed in the current encoding mode'
+    , unfinishedAttribute: 'unfinished attribute near \'%1\''
   };
 
   // ### Abstract Syntax Tree
@@ -363,10 +364,11 @@
       };
     }
 
-    , identifier: function(name) {
+    , identifier: function(name, attribute) {
       return {
           type: 'Identifier'
         , name: name
+        , attribute: attribute
       };
     }
 
@@ -1595,10 +1597,11 @@
     };
   };
 
-  FullFlowContext.prototype.addLocal = function (name, token) {
+  FullFlowContext.prototype.addLocal = function (name, token, attrib) {
     this.currentScope().locals.push({
       name: name,
-      token: token
+      token: token,
+      attrib: attrib
     });
   };
 
@@ -1988,7 +1991,7 @@
   // child.
   //
   //     local ::= 'local' 'function' Name funcdecl
-  //        | 'local' Name {',' Name} ['=' exp {',' exp}]
+  //        | 'local' Name ['<' Name '>'] {',' Name ['<' Name '>']} ['=' exp {',' exp}]
 
   function parseLocalStatement(flowContext) {
     var name
@@ -1999,10 +2002,14 @@
         , init = [];
 
       do {
-        name = parseIdentifier();
+        if(features.localAttributes) {
+          name = parseLocalIdentifierDeclaration();
+        } else {
+          name = parseIdentifier();
+        }
 
         variables.push(name);
-        flowContext.addLocal(name.name, declToken);
+        flowContext.addLocal(name.name, declToken, name.attribute);
       } while (consume(','));
 
       if (consume('=')) {
@@ -2138,6 +2145,31 @@
     if (Identifier !== token.type) raiseUnexpectedToken('<name>', token);
     next();
     return finishNode(ast.identifier(identifier));
+  }
+    
+  //     Identifier ::= Name ['<' Name '>']
+    
+  function parseLocalIdentifierDeclaration() {
+    markLocation();
+    var identifier = token.value;
+    var attribute = null;
+    if (Identifier !== token.type) raiseUnexpectedToken('<name>', token);
+    
+    next();
+      
+    if(consume('<')) {
+      attribute = token.value;
+        
+      if (Identifier !== token.type) raiseUnexpectedToken('<name>', token);
+      
+      next();
+        
+      if(!consume('>')) {
+        raise(null, errors.unfinishedAttribute, '<' + attribute)
+      }
+    }
+        
+    return finishNode(ast.identifier(identifier, attribute));
   }
 
   // Parse the functions parameters and body block. The name should already
@@ -2576,6 +2608,18 @@
       bitwiseOperators: true,
       integerDivision: true,
       relaxedBreak: true
+    },
+    '5.4': {
+      labels: true,
+      emptyStatement: true,
+      hexEscapes: true,
+      skipWhitespaceEscape: true,
+      strictEscapes: true,
+      unicodeEscapes: true,
+      bitwiseOperators: true,
+      integerDivision: true,
+      relaxedBreak: true,
+      localAttributes: true
     },
     'LuaJIT': {
       // XXX: LuaJIT language features may depend on compilation options; may need to
