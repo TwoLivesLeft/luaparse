@@ -1,8 +1,8 @@
 {
   "name": "luaparse",
-  "repository": "oxyc/luaparse",
+  "repository": "fstirlitz/luaparse",
   "description": "A Lua parser in JavaScript",
-  "version": "0.1.15",
+  "version": "0.2.1",
   "keywords": ["ast", "lua", "parser", "parsing"],
   "main": "luaparse.js",
   "scripts": ["luaparse.js"],

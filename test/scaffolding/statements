@@ -1,6 +1,8 @@
-break
-::foo                                   -- FAIL
-::foo::
-goto                                    -- FAIL
-goto foo
+return
 nil                                     -- FAIL
+return;
+;                                       -- FAIL
+// { "luaVersion": "5.2" }
+return;
+return;;                                -- FAIL
+;

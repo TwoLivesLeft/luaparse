@@ -1,6 +1,6 @@
-# luaparse [![Build Status](https://travis-ci.org/oxyc/luaparse.svg)](https://travis-ci.org/oxyc/luaparse)
+# luaparse [![Build Status](https://travis-ci.org/fstirlitz/luaparse.svg)](https://travis-ci.org/fstirlitz/luaparse)
 
-A Lua parser written in JavaScript, for my bachelor's thesis at Arcada.
+A Lua parser written in JavaScript, originally written by Oskar Schöldström for his bachelor's thesis at Arcada.
 
 ## Installation
 
@@ -60,6 +60,17 @@ The available options are:
   created.
 - `onDestroyScope: null` A callback which will be invoked when the current
   scope is destroyed.
+- `onLocalDeclaration: null` A callback which will be invoked when a local
+  variable is declared. The identifier will be passed as the only parameter.
+- `luaVersion: '5.1'` The version of Lua the parser will target; supported
+  values are `'5.1'`, `'5.2'`, `'5.3'` and `'LuaJIT'`.
+- `extendedIdentifiers: false` Whether to allow code points ≥ U+0080 in
+  identifiers, like LuaJIT does. **Note:** setting `luaVersion: 'LuaJIT'`
+  currently does *not* enable this option; this may change in the future.
+- `encodingMode: 'none'` Defines the relation between code points ≥ U+0080
+  appearing in parser input and raw bytes in source code, and how Lua escape
+  sequences in JavaScript strings should be interpreted. See the
+  [Encoding modes](#encoding-modes) section below for more information.
 
 The default options are also exposed through `luaparse.defaultOptions` where
 they can be overriden globally.
@@ -114,6 +125,31 @@ then the returned value will be:
   "comments": []
 }
 ```
+
+### Encoding modes
+
+Unlike strings in JavaScript, Lua strings are not Unicode strings, but
+bytestrings (sequences of 8-bit values); likewise, implementations of Lua
+parse the source code as a sequence of octets. However, the input to this
+parser is a JavaScript string, i.e. a sequence of 16-bit code units (not
+necessarily well-formed UTF-16). This poses a problem of how those code
+units should be interpreted, particularly if they are outside the Basic
+Latin block ('ASCII').
+
+The `encodingMode` option specifies how these issues should be handled.
+Possible values are as follows:
+
+- `'none'`: Source code characters all pass through as-is and string
+  literals are not interpreted at all; the string literal nodes contain
+  the value `null`. This is the default mode.
+- `'x-user-defined'`: Source code has been decoded with the WHATWG
+  `x-user-defined` encoding; escapes of bytes in the range \[0x80, 0xff]
+  are mapped to the Unicode range \[U+F780, U+F7FF].
+- `'pseudo-latin1'`: Source code has been decoded with the IANA
+  `iso-8859-1` encoding; escapes of bytes in the range \[0x80, 0xff]
+  are mapped to Unicode range \[U+0080, U+00FF]. Note that this is
+  **not** the same as how WHATWG standards define the `iso-8859-1`
+  encoding, which is to say, as a synonym of `windows-1252`.
 
 ### Custom AST
 
@@ -172,8 +208,8 @@ parser.lex(); // { type: 1, value: "<eof>", line: 1, lineStart: 0, range: [11 11
 
 ## Examples
 
-Have a look in the [examples directory](https://github.com/oxyc/luaparse/tree/master/examples)
-of the repository for some code examples or check them out [live](http://oxyc.github.io/luaparse/examples.html).
+Have a look in the [examples directory](https://github.com/fstirlitz/luaparse/tree/master/examples)
+of the repository for some code examples or check them out [live](https://fstirlitz.github.io/luaparse/examples.html).
 
 ## luaparse(1)
 
@@ -214,7 +250,7 @@ $ luaparse "i = 0"
 ## Support
 
 Has been tested in at least IE6+, Firefox 3+, Safari 4+, Chrome 10+, Opera 10+,
-Node 0.4.0+, RingoJS 0.8-0.9, Narwhal 0.3.2, Rhino 1.7R4-1.7R5, Nashorn 1.8.0.
+Node 0.4.0+, RingoJS 0.8-0.9, Rhino 1.7R4-1.7R5, Nashorn 1.8.0.
 
 ## Quality Assurance
 
@@ -227,14 +263,12 @@ install` which will download RequireJS.
 
 The luaparse test suite uses [testem](https://github.com/airportyh/testem) as a
 test runner, and because of this it's very easy to run the tests using
-different javascript engines or even on locally installed browsers. Currently
-the default runner uses [PhantomJS](http://phantomjs.org/) and node so when
-using `make test` or `npm test` you should have PhantomJS installed.
+different javascript engines or even on locally installed browsers.
 
 ### Test runners
 
-- `make test` uses PhantomJS and node.
-- `make testem-engines` uses PhantomJS, node, narwhal, ringo, rhino and rhino
+- `make test` uses node.
+- `make testem-engines` uses node, ringo and rhino
 1.7R5. This requires that you have the engines installed.
 - `make test-node` uses a custom command line reporter to make the output
 easier on the eyes while practicing TDD.
@@ -245,16 +279,16 @@ installed browser.
 
 - You can check the function complexity using [complexity-report](https://github.com/philbooth/complexityReport.js)
 using `make complexity-analysis`
-- Running `make coverage` will generate the [coverage report](http://oxyc.github.io/luaparse/coverage.html).
+- Running `make coverage` will generate the [coverage report](https://fstirlitz.github.io/luaparse/coverage.html).
 To simply check that all code has coverage you can run `make coverage-analysis`.
 - `make lint`, `make benchmark`, `make profile`.
 
 ### Documentation
 
-By running `make docs` all [documentation](http://oxyc.github.io/luaparse/)
+By running `make docs` all [documentation](https://fstirlitz.github.io/luaparse/)
 will be generated.
 
-## Projects using luaparse
+## Projects using/extending luaparse
 
 - [luamin](http://mths.be/luamin), a Lua minifier written by Mathias Bynens.
 - [Ace](https://github.com/ajaxorg/ace), an online code editor.
@@ -270,5 +304,6 @@ MIT
 
 [luaminify]: https://github.com/stravant/LuaMinify
 [yueliang]: http://yueliang.luaforge.net/
-[lua]: http://www.lua.org
+[lua]: https://www.lua.org
 [esprima]: http://esprima.org
+[wtf8]: https://simonsapin.github.io/wtf-8/

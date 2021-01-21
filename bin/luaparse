@@ -67,6 +67,12 @@ for (var i = 0, l = args.length; i < l; i++) {
       case 'comments': case 'scope': case 'locations': case 'ranges':
         options[flag] = bool;
         continue;
+      case 'L': case 'luaversion':
+        options.luaVersion = args[++i];
+        continue;
+      case 'X': case 'extendedidentifiers':
+        options.extendedIdentifiers = bool;
+        continue;
       case 'v': case 'version':
         console.log("luaparse v%s", luaparse.version);
         process.exit(0);
@@ -113,7 +119,7 @@ else {
   // @TODO doesn't work in node 0.9.4-0.9.11 because `end` is never emitted.
   stdin.setEncoding('utf8');
   stdin.on('data', function(chunk) { input += chunk; });
-  stdin.on('end', function() { snippets.unshift(input.trim()); done(); });
+  stdin.on('end', function() { snippets.unshift({ code: input }); done(); });
   stdin.resume();
 }
 

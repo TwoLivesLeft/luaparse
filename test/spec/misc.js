@@ -23,7 +23,7 @@
   else if (freeExports && !freeExports.nodeType) {
     // in Node.js or RingoJS v0.8.0+
     if (freeModule) factory(freeModule.exports);
-    // in Narwhal or RingoJS v0.7.0-
+    // in RingoJS v0.7.0-
     else factory(freeExports);
   }
   // in a browser or Rhino
@@ -36,7 +36,7 @@
   exports.options = { };
   exports.spec = {
     'function foo.bar:baz(a) goto foo end local function a() local a, b ::c:: for a,b in c.d:e() do end end do while a do end repeat until 0 end for a = 1, 1 do end a = function() end': {
-      options: { },
+      options: { "luaVersion": "5.2" },
       name: 'should not scope by default',
       result: {
         "type": "Chunk",

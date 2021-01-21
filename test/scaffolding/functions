@@ -11,13 +11,14 @@ function a(p                            -- FAIL
 function a(p,)                          -- FAIL
 function a(p q                          -- FAIL
 function a(p) end
+function a(p,q) end
+function a(p q) end                     -- FAIL
 function a(p,q,) end                    -- FAIL
 function a(p,q,r) end
 function a(p,q,1                        -- FAIL
 function a(p) do                        -- FAIL
 function a(p) 1 end                     -- FAIL
 function a(p) return end
-//function a(p) break end                 -- FAIL
 function a(p) return return end         -- FAIL
 function a(p) do end end
 function a.(                            -- FAIL
@@ -40,3 +41,7 @@ function a(p,q,r,...) end
 function a() local a local b end
 function a() local a; local b; end
 function a() end; function a() end;
+return ...
+function a(...) return ... end
+function a() return ... end                     -- FAIL
+function a(...) function b() return ... end end -- FAIL
